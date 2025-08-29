@@ -27,7 +27,7 @@ where
 }
 
 pub fn run_soulver(file: &str) -> Result<String> {
-    let trimmed_input = file;
+    let trimmed_input = file.trim_end();
     let mut output = run_raw_soulver(trimmed_input)?;
 
     let initial_newlines = get_number_of_initial_newlines(trimmed_input.lines());
@@ -39,20 +39,17 @@ pub fn run_soulver(file: &str) -> Result<String> {
 }
 
 pub fn run_soulver_zipped(file: &str) -> Result<String> {
-    let output = run_soulver(file)?;
+    let trimmed_input = file.trim_end();
+    let output = run_soulver(trimmed_input)?;
     let output_lines: Vec<String> = output.lines().map(|line| line.to_owned()).collect();
-    let input_lines: Vec<&str> = {
-        // `run_raw_soulver` strips a trailing newline
-        let input = file.strip_suffix('\n').unwrap_or(file);
-        input.lines().collect()
-    };
+    let input_lines: Vec<&str> = trimmed_input.lines().collect();
     let longest_input_line_length = input_lines
         .iter()
         .map(|line| line.chars().count())
         .max()
         .unwrap_or(0);
 
-    let mut out = String::with_capacity(file.len() + output.len());
+    let mut out = String::with_capacity(trimmed_input.len() + output.len());
     ensure!(input_lines.len() == output_lines.len());
     for (input_line, output_line) in input_lines.iter().zip(output_lines.iter()) {
         if input_line.is_empty() {
@@ -69,8 +66,7 @@ pub fn run_soulver_zipped(file: &str) -> Result<String> {
             ));
         }
     }
-    // Not sure why checking for multiple newlines at the end is necessary but it works
-    if out.ends_with('\n') && !file.ends_with("\n\n") {
+    if out.ends_with('\n') {
         out.pop();
     }
 
@@ -104,6 +100,21 @@ mod tests {
     #[test]
     fn test_run_raw_soulver_trailing_headers() {
         assert_eq!(run_raw_soulver("1\n# Foo\n# Bar").unwrap(), "1\n\n")
+    }
+
+    #[test]
+    fn test_run_raw_soulver_no_end_only_newlines_1() {
+        assert_eq!(run_raw_soulver("\n").unwrap(), "")
+    }
+
+    #[test]
+    fn test_run_raw_soulver_no_end_only_newlines_2() {
+        assert_eq!(run_raw_soulver("\n\n").unwrap(), "")
+    }
+
+    #[test]
+    fn test_run_raw_soulver_no_end_only_newlines_3() {
+        assert_eq!(run_raw_soulver("\n\n\n").unwrap(), "")
     }
 
     /// Calculate the number of missing leading newlines using `soulver`.
@@ -170,8 +181,28 @@ mod tests {
     }
 
     #[test]
-    fn test_run_soulver_trailing_newlines() {
-        assert_eq!(run_soulver("1\n\n\n").unwrap(), "1\n\n")
+    fn test_run_soulver_no_end_only_newlines_1() {
+        assert_eq!(run_soulver("\n").unwrap(), "")
+    }
+
+    #[test]
+    fn test_run_soulver_no_end_only_newlines_2() {
+        assert_eq!(run_soulver("\n\n").unwrap(), "")
+    }
+
+    #[test]
+    fn test_run_soulver_no_end_only_newlines_3() {
+        assert_eq!(run_soulver("\n\n\n").unwrap(), "")
+    }
+
+    #[test]
+    fn test_run_soulver_trailing_newlines_2() {
+        assert_eq!(run_soulver("1\n\n").unwrap(), "1")
+    }
+
+    #[test]
+    fn test_run_soulver_trailing_newlines_3() {
+        assert_eq!(run_soulver("1\n\n\n").unwrap(), "1")
     }
 
     #[test]
@@ -218,11 +249,11 @@ mod tests {
 
     #[test]
     fn test_run_soulver_zipped_trailing_newlines_2() {
-        assert_eq!(run_soulver_zipped("1\n\n").unwrap(), "1 | 1\n")
+        assert_eq!(run_soulver_zipped("1\n\n").unwrap(), "1 | 1")
     }
 
     #[test]
     fn test_run_soulver_zipped_trailing_newlines_3() {
-        assert_eq!(run_soulver_zipped("1\n\n\n").unwrap(), "1 | 1\n\n")
+        assert_eq!(run_soulver_zipped("1\n\n\n").unwrap(), "1 | 1")
     }
 }
