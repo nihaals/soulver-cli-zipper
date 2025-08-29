@@ -135,27 +135,17 @@ mod tests {
     #[test]
     fn test_get_number_of_initial_newlines_mix_end() {
         let expected = 3;
-        assert_eq!(
-            get_correct_number_of_initial_newlines(&["", "# Foo", "// Bar", "1"]),
-            expected,
-        );
-        assert_eq!(
-            get_number_of_initial_newlines(["", "# Foo", "// Bar", "1"]),
-            expected,
-        );
+        let lines = &["", "# Foo", "// Bar", "1"];
+        assert_eq!(get_correct_number_of_initial_newlines(lines), expected);
+        assert_eq!(get_number_of_initial_newlines(lines), expected);
     }
 
     #[test]
     fn test_get_number_of_initial_newlines_mix_no_end() {
         let expected = 3;
-        assert_eq!(
-            get_correct_number_of_initial_newlines(&["", "# Foo", "// Bar"]),
-            expected,
-        );
-        assert_eq!(
-            get_number_of_initial_newlines(["", "# Foo", "// Bar"]),
-            expected,
-        );
+        let lines = &["", "# Foo", "// Bar"];
+        assert_eq!(get_correct_number_of_initial_newlines(lines), expected);
+        assert_eq!(get_number_of_initial_newlines(lines), expected);
     }
 
     #[test]
