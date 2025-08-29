@@ -13,6 +13,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Calculate a sheet from stdin with `soulver` and include the input on each line
     Calculate {
         /// Do not add the input to the output
         #[arg(long)]
