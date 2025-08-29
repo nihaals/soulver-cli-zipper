@@ -26,7 +26,7 @@ where
         .count()
 }
 
-fn run_soulver(file: &str) -> Result<String> {
+pub fn run_soulver(file: &str) -> Result<String> {
     let trimmed_input = file;
     let mut output = run_raw_soulver(trimmed_input)?;
 
