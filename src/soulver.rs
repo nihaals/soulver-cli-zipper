@@ -149,6 +149,14 @@ mod tests {
     }
 
     #[test]
+    fn test_get_number_of_initial_newlines_only_newlines_no_end() {
+        let expected = 3;
+        let lines = &["", "", ""];
+        assert_eq!(get_correct_number_of_initial_newlines(lines), expected);
+        assert_eq!(get_number_of_initial_newlines(lines), expected);
+    }
+
+    #[test]
     fn test_run_soulver_variable() {
         assert_eq!(run_soulver("Foo = 1\nFoo + 2").unwrap(), "1\n3")
     }
