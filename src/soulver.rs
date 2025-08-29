@@ -46,7 +46,11 @@ pub fn run_soulver_zipped(file: &str) -> Result<String> {
         let input = file.strip_suffix('\n').unwrap_or(file);
         input.lines().collect()
     };
-    let longest_input_line_length = input_lines.iter().map(|line| line.len()).max().unwrap_or(0);
+    let longest_input_line_length = input_lines
+        .iter()
+        .map(|line| line.chars().count())
+        .max()
+        .unwrap_or(0);
 
     let mut out = String::with_capacity(file.len() + output.len());
     ensure!(input_lines.len() == output_lines.len());
@@ -54,18 +58,15 @@ pub fn run_soulver_zipped(file: &str) -> Result<String> {
         if input_line.is_empty() {
             out.push('\n');
         } else if !input_line.is_empty() && output_line.is_empty() {
-            let padding = " ".repeat(longest_input_line_length - input_line.len());
-            out.push_str(input_line);
-            out.push_str(&padding);
-            out.push_str(" |");
-            out.push('\n');
+            out.push_str(&format!(
+                "{input_line:<width$} |\n",
+                width = longest_input_line_length,
+            ));
         } else {
-            let padding = " ".repeat(longest_input_line_length - input_line.len());
-            out.push_str(input_line);
-            out.push_str(&padding);
-            out.push_str(" | ");
-            out.push_str(output_line);
-            out.push('\n');
+            out.push_str(&format!(
+                "{input_line:<width$} | {output_line}\n",
+                width = longest_input_line_length,
+            ));
         }
     }
     // Not sure why checking for multiple newlines at the end is necessary but it works
@@ -199,6 +200,14 @@ mod tests {
         assert_eq!(
             run_soulver_zipped("\n# Foo\n// Bar\n").unwrap(),
             "\n# Foo  |\n// Bar |",
+        )
+    }
+
+    #[test]
+    fn test_run_soulver_zipped_pound_sign() {
+        assert_eq!(
+            run_soulver_zipped("# Foo\nBar = £1").unwrap(),
+            "# Foo    |\nBar = £1 | £1.00",
         )
     }
 
