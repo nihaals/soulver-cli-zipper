@@ -52,9 +52,7 @@ pub fn run_soulver_zipped(file: &str) -> Result<String> {
     let mut out = String::with_capacity(trimmed_input.len() + output.len());
     ensure!(input_lines.len() == output_lines.len());
     for (input_line, output_line) in input_lines.iter().zip(output_lines.iter()) {
-        if input_line.is_empty() {
-            out.push('\n');
-        } else if !input_line.is_empty() && output_line.is_empty() {
+        if output_line.is_empty() {
             out.push_str(&format!(
                 "{input_line:<width$} |\n",
                 width = longest_input_line_length,
@@ -215,7 +213,10 @@ mod tests {
 
     #[test]
     fn test_run_soulver_zipped_newlines() {
-        assert_eq!(run_soulver_zipped("\n1\n\n2").unwrap(), "\n1 | 1\n\n2 | 2")
+        assert_eq!(
+            run_soulver_zipped("\n1\n\n2").unwrap(),
+            "  |\n1 | 1\n  |\n2 | 2"
+        )
     }
 
     #[test]
@@ -230,7 +231,7 @@ mod tests {
     fn test_run_soulver_zipped_no_end() {
         assert_eq!(
             run_soulver_zipped("\n# Foo\n// Bar\n").unwrap(),
-            "\n# Foo  |\n// Bar |",
+            "       |\n# Foo  |\n// Bar |",
         )
     }
 
