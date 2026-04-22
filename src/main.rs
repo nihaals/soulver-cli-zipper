@@ -2,7 +2,10 @@ mod soulver;
 
 use anyhow::Result;
 use clap::{CommandFactory, Parser, Subcommand};
-use std::io::{self, Read};
+use std::{
+    io::{self, Read},
+    path::PathBuf,
+};
 
 #[derive(Parser)]
 #[command(version, author, about, long_about = None)]
@@ -18,6 +21,10 @@ enum Commands {
         /// Do not add the input to the output
         #[arg(long)]
         no_zip: bool,
+
+        /// The path to the Soulver CLI binary, defaults to `soulver` using PATH
+        #[arg(short = 'p', long)]
+        soulver_path: Option<PathBuf>,
     },
 
     /// Generate shell completions
@@ -32,13 +39,16 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Calculate { no_zip } => {
+        Commands::Calculate {
+            no_zip,
+            soulver_path,
+        } => {
             let mut input = String::new();
             io::stdin().read_to_string(&mut input)?;
             let result = if no_zip {
-                soulver::run_soulver(&input)?
+                soulver::run_soulver(&input, soulver_path.as_deref())?
             } else {
-                soulver::run_soulver_zipped(&input)?
+                soulver::run_soulver_zipped(&input, soulver_path.as_deref())?
             };
             println!("{result}");
         }

@@ -1,9 +1,18 @@
-use std::process::Command;
+use std::{ffi::OsStr, path::Path, process::Command};
 
 use anyhow::{Result, bail, ensure};
 
-fn run_raw_soulver(file: &str) -> Result<String> {
-    let output = Command::new("soulver").arg(file).output()?;
+fn run_raw_soulver(file: &str, soulver_path: Option<&Path>) -> Result<String> {
+    let soulver_command: &OsStr = match soulver_path {
+        Some(path) => {
+            if !path.is_file() {
+                bail!("soulver_path is not a file");
+            }
+            path.as_os_str()
+        }
+        None => OsStr::new("soulver"),
+    };
+    let output = Command::new(soulver_command).arg(file).output()?;
     if !output.status.success() {
         bail!("soulver exited with non-zero exit code");
     }
@@ -26,9 +35,9 @@ where
         .count()
 }
 
-pub fn run_soulver(file: &str) -> Result<String> {
+pub fn run_soulver(file: &str, soulver_path: Option<&Path>) -> Result<String> {
     let trimmed_input = file.trim_end();
-    let mut output = run_raw_soulver(trimmed_input)?;
+    let mut output = run_raw_soulver(trimmed_input, soulver_path)?;
 
     let initial_newlines = get_number_of_initial_newlines(trimmed_input.lines());
     if initial_newlines > 0 {
@@ -38,9 +47,9 @@ pub fn run_soulver(file: &str) -> Result<String> {
     Ok(output)
 }
 
-pub fn run_soulver_zipped(file: &str) -> Result<String> {
+pub fn run_soulver_zipped(file: &str, soulver_path: Option<&Path>) -> Result<String> {
     let trimmed_input = file.trim_end();
-    let output = run_soulver(trimmed_input)?;
+    let output = run_soulver(trimmed_input, soulver_path)?;
     let output_lines: Vec<String> = output.lines().map(|line| line.to_owned()).collect();
     let input_lines: Vec<&str> = trimmed_input.lines().collect();
     let longest_input_line_length = input_lines
@@ -74,6 +83,24 @@ pub fn run_soulver_zipped(file: &str) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use std::path::PathBuf;
+
+    fn soulver_path() -> Option<PathBuf> {
+        std::env::var("SOULVER_PATH").ok().map(PathBuf::from)
+    }
+
+    fn run_raw_soulver(file: &str) -> Result<String> {
+        super::run_raw_soulver(file, soulver_path().as_deref())
+    }
+
+    fn run_soulver(file: &str) -> Result<String> {
+        super::run_soulver(file, soulver_path().as_deref())
+    }
+
+    fn run_soulver_zipped(file: &str) -> Result<String> {
+        super::run_soulver_zipped(file, soulver_path().as_deref())
+    }
 
     #[test]
     fn test_run_raw_soulver_variable() {
