@@ -47,25 +47,37 @@ pub fn run_soulver(file: &str, soulver_path: Option<&Path>) -> Result<String> {
     Ok(output)
 }
 
-pub fn run_soulver_zipped(file: &str, soulver_path: Option<&Path>) -> Result<String> {
+pub fn run_soulver_zipped(
+    file: &str,
+    aligned_bars: bool,
+    soulver_path: Option<&Path>,
+) -> Result<String> {
     let trimmed_input = file.trim_end();
     let output = run_soulver(trimmed_input, soulver_path)?;
     let output_lines: Vec<String> = output.lines().map(|line| line.to_owned()).collect();
     let input_lines: Vec<&str> = trimmed_input.lines().collect();
-    let longest_input_line_length = input_lines
-        .iter()
-        .map(|line| line.chars().count())
-        .max()
-        .unwrap_or(0);
+    let longest_input_line_length = if aligned_bars {
+        input_lines
+            .iter()
+            .map(|line| line.chars().count())
+            .max()
+            .unwrap_or(0)
+    } else {
+        0
+    };
 
     let mut out = String::with_capacity(trimmed_input.len() + output.len());
     ensure!(input_lines.len() == output_lines.len());
     for (input_line, output_line) in input_lines.iter().zip(output_lines.iter()) {
         if output_line.is_empty() {
-            out.push_str(&format!(
-                "{input_line:<width$} |\n",
-                width = longest_input_line_length,
-            ));
+            if !aligned_bars && input_line.is_empty() {
+                out.push_str("|\n");
+            } else {
+                out.push_str(&format!(
+                    "{input_line:<width$} |\n",
+                    width = longest_input_line_length,
+                ));
+            }
         } else {
             out.push_str(&format!(
                 "{input_line:<width$} | {output_line}\n",
@@ -98,8 +110,8 @@ mod tests {
         super::run_soulver(file, soulver_path().as_deref())
     }
 
-    fn run_soulver_zipped(file: &str) -> Result<String> {
-        super::run_soulver_zipped(file, soulver_path().as_deref())
+    fn run_soulver_zipped(file: &str, aligned_bars: bool) -> Result<String> {
+        super::run_soulver_zipped(file, aligned_bars, soulver_path().as_deref())
     }
 
     #[test]
@@ -229,57 +241,104 @@ mod tests {
     }
 
     #[test]
-    fn test_run_soulver_zipped_variable() {
+    fn test_run_soulver_zipped_variable_aligned() {
         assert_eq!(
-            run_soulver_zipped("Foo = 1\nFoo + 2").unwrap(),
+            run_soulver_zipped("Foo = 1\nFoo + 2", true).unwrap(),
             "Foo = 1 | 1\nFoo + 2 | 3",
         )
     }
 
     #[test]
-    fn test_run_soulver_zipped_newlines() {
+    fn test_run_soulver_zipped_newlines_aligned() {
         assert_eq!(
-            run_soulver_zipped("\n1\n\n2").unwrap(),
+            run_soulver_zipped("\n1\n\n2", true).unwrap(),
             "  |\n1 | 1\n  |\n2 | 2"
         )
     }
 
     #[test]
-    fn test_run_soulver_zipped_headings() {
+    fn test_run_soulver_zipped_newlines_unaligned() {
         assert_eq!(
-            run_soulver_zipped("# Foo\n1\n# Bar\n2").unwrap(),
+            run_soulver_zipped("\n1\n\n2", false).unwrap(),
+            "|\n1 | 1\n|\n2 | 2"
+        )
+    }
+
+    #[test]
+    fn test_run_soulver_zipped_headings_aligned() {
+        assert_eq!(
+            run_soulver_zipped("# Foo\n1\n# Bar\n2", true).unwrap(),
             "# Foo |\n1     | 1\n# Bar |\n2     | 2",
         )
     }
 
     #[test]
-    fn test_run_soulver_zipped_no_end() {
+    fn test_run_soulver_zipped_headings_unaligned() {
         assert_eq!(
-            run_soulver_zipped("\n# Foo\n// Bar\n").unwrap(),
+            run_soulver_zipped("# Foo\n1\n# Bar\n2", false).unwrap(),
+            "# Foo |\n1 | 1\n# Bar |\n2 | 2",
+        )
+    }
+
+    #[test]
+    fn test_run_soulver_zipped_no_end_aligned() {
+        assert_eq!(
+            run_soulver_zipped("\n# Foo\n// Bar\n", true).unwrap(),
             "       |\n# Foo  |\n// Bar |",
         )
     }
 
     #[test]
-    fn test_run_soulver_zipped_pound_sign() {
+    fn test_run_soulver_zipped_no_end_unaligned() {
         assert_eq!(
-            run_soulver_zipped("# Foo\nBar = £1").unwrap(),
+            run_soulver_zipped("\n# Foo\n// Bar\n", false).unwrap(),
+            "|\n# Foo |\n// Bar |",
+        )
+    }
+
+    #[test]
+    fn test_run_soulver_zipped_pound_sign_aligned() {
+        assert_eq!(
+            run_soulver_zipped("# Foo\nBar = £1", true).unwrap(),
             "# Foo    |\nBar = £1 | £1.00",
         )
     }
 
     #[test]
-    fn test_run_soulver_zipped_trailing_newlines_1() {
-        assert_eq!(run_soulver_zipped("1\n").unwrap(), "1 | 1")
+    fn test_run_soulver_zipped_pound_sign_unaligned() {
+        assert_eq!(
+            run_soulver_zipped("# Foo\nBar = £1", false).unwrap(),
+            "# Foo |\nBar = £1 | £1.00",
+        )
     }
 
     #[test]
-    fn test_run_soulver_zipped_trailing_newlines_2() {
-        assert_eq!(run_soulver_zipped("1\n\n").unwrap(), "1 | 1")
+    fn test_run_soulver_zipped_trailing_newlines_1_aligned() {
+        assert_eq!(run_soulver_zipped("1\n", true).unwrap(), "1 | 1")
     }
 
     #[test]
-    fn test_run_soulver_zipped_trailing_newlines_3() {
-        assert_eq!(run_soulver_zipped("1\n\n\n").unwrap(), "1 | 1")
+    fn test_run_soulver_zipped_trailing_newlines_1_unaligned() {
+        assert_eq!(run_soulver_zipped("1\n", false).unwrap(), "1 | 1")
+    }
+
+    #[test]
+    fn test_run_soulver_zipped_trailing_newlines_2_aligned() {
+        assert_eq!(run_soulver_zipped("1\n\n", true).unwrap(), "1 | 1")
+    }
+
+    #[test]
+    fn test_run_soulver_zipped_trailing_newlines_2_unaligned() {
+        assert_eq!(run_soulver_zipped("1\n\n", false).unwrap(), "1 | 1")
+    }
+
+    #[test]
+    fn test_run_soulver_zipped_trailing_newlines_3_aligned() {
+        assert_eq!(run_soulver_zipped("1\n\n\n", true).unwrap(), "1 | 1")
+    }
+
+    #[test]
+    fn test_run_soulver_zipped_trailing_newlines_3_unaligned() {
+        assert_eq!(run_soulver_zipped("1\n\n\n", false).unwrap(), "1 | 1")
     }
 }

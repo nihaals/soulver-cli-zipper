@@ -22,6 +22,10 @@ enum Commands {
         #[arg(long)]
         no_zip: bool,
 
+        /// Do not align the bars in the output with extra spaces
+        #[arg(long, conflicts_with = "no_zip")]
+        no_align: bool,
+
         /// The path to the Soulver CLI binary, defaults to `soulver` using PATH
         #[arg(short = 'p', long)]
         soulver_path: Option<PathBuf>,
@@ -41,6 +45,7 @@ fn main() -> Result<()> {
     match cli.command {
         Commands::Calculate {
             no_zip,
+            no_align,
             soulver_path,
         } => {
             let mut input = String::new();
@@ -48,7 +53,7 @@ fn main() -> Result<()> {
             let result = if no_zip {
                 soulver::run_soulver(&input, soulver_path.as_deref())?
             } else {
-                soulver::run_soulver_zipped(&input, soulver_path.as_deref())?
+                soulver::run_soulver_zipped(&input, !no_align, soulver_path.as_deref())?
             };
             println!("{result}");
         }
